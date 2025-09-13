@@ -12,7 +12,6 @@ from sqlalchemy import (
     Boolean, Column, DateTime, String, Text, Numeric, Integer, 
     ForeignKey, Index, JSON, Float, BigInteger
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -24,7 +23,7 @@ class MetricCategory(Base):
     
     __tablename__ = "metric_categories"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     name = Column(String(100), unique=True, nullable=False, index=True)
     display_name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
@@ -49,12 +48,12 @@ class AnalyticsData(Base):
     
     __tablename__ = "analytics_data"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Metric Information
     metric_name = Column(String(100), nullable=False, index=True)
     metric_display_name = Column(String(200), nullable=True)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("metric_categories.id"), nullable=True, index=True)
+    category_id = Column(String(36), ForeignKey("metric_categories.id"), nullable=True, index=True)
     
     # Data Values
     value = Column(Numeric(precision=20, scale=6), nullable=False)
@@ -70,7 +69,7 @@ class AnalyticsData(Base):
     hour_key = Column(String(13), nullable=False, index=True)  # YYYY-MM-DD-HH for hourly aggregation
     
     # Dimensions for filtering and grouping
-    dimensions = Column(JSONB, nullable=True)  # Flexible dimensions storage
+    dimensions = Column(JSON, nullable=True)  # Flexible dimensions storage
     source = Column(String(50), nullable=True, index=True)  # data source identifier
     
     # Geographic Information
@@ -86,8 +85,8 @@ class AnalyticsData(Base):
     # Quality and Metadata
     confidence_score = Column(Float, nullable=True)  # 0.0 - 1.0 confidence in data accuracy
     is_anomaly = Column(Boolean, default=False, nullable=False, index=True)
-    tags = Column(JSONB, nullable=True)  # Additional tags for categorization
-    metadata = Column(JSONB, nullable=True)  # Additional metadata
+    tags = Column(JSON, nullable=True)  # Additional tags for categorization
+    extra_data = Column(JSON, nullable=True)  # Additional metadata
     
     # Aggregation Information
     aggregation_level = Column(String(20), nullable=False, index=True)  # raw, hourly, daily, weekly, monthly
@@ -144,7 +143,7 @@ class AlertRule(Base):
     
     __tablename__ = "alert_rules"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Rule Configuration
     name = Column(String(200), nullable=False)
@@ -160,7 +159,7 @@ class AlertRule(Base):
     # Alert Settings
     severity = Column(String(20), default="medium", nullable=False)  # low, medium, high, critical
     is_active = Column(Boolean, default=True, nullable=False)
-    notification_channels = Column(JSONB, nullable=True)  # email, slack, webhook
+    notification_channels = Column(JSON, nullable=True)  # email, slack, webhook
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -178,11 +177,11 @@ class Alert(Base):
     
     __tablename__ = "alerts"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Alert Information
-    rule_id = Column(UUID(as_uuid=True), ForeignKey("alert_rules.id"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    rule_id = Column(String(36), ForeignKey("alert_rules.id"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     
     # Alert Details
     title = Column(String(200), nullable=False)
@@ -200,7 +199,7 @@ class Alert(Base):
     triggered_at = Column(DateTime(timezone=True), nullable=False, index=True)
     
     # Additional Context
-    context_data = Column(JSONB, nullable=True)
+    context_data = Column(JSON, nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

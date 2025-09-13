@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -21,7 +20,7 @@ class User(Base):
     __tablename__ = "users"
     
     # Primary Key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Authentication Fields
     email = Column(String(255), unique=True, index=True, nullable=False)

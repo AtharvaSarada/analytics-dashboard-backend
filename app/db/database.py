@@ -10,26 +10,49 @@ from sqlalchemy import event, pool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import NullPool
+from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 # Create async engine with optimized connection pool
-engine = create_async_engine(
-    settings.ASYNC_DATABASE_URL,
-    echo=settings.DEBUG,
-    future=True,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=10,
-    max_overflow=20,
-    poolclass=NullPool if settings.ENVIRONMENT == "test" else pool.QueuePool,
-)
+try:
+    database_url = settings.ASYNC_DATABASE_URL
+    logger.info(f"Connecting to database: {database_url.split('@')[-1] if '@' in database_url else database_url}")
+    
+    # Configure engine parameters based on database type
+    engine_params = {
+        "echo": settings.DEBUG,
+        "future": True,
+    }
+    
+    # SQLite-specific configuration
+    if "sqlite" in database_url.lower():
+        engine_params["poolclass"] = NullPool
+    else:
+        # PostgreSQL or other database configuration
+        engine_params.update({
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+            "pool_size": 10,
+            "max_overflow": 20,
+            "poolclass": pool.QueuePool,
+        })
+    
+    engine = create_async_engine(database_url, **engine_params)
+    logger.info("Database engine created successfully")
+except Exception as e:
+    logger.error(f"Failed to create database engine: {e}")
+    raise
 
 # Create async session factory
+AsyncSessionLocal = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
+
 def get_async_session():
-    return AsyncSession(engine)
+    return AsyncSessionLocal()
 
 # Create declarative base for models
 Base = declarative_base()

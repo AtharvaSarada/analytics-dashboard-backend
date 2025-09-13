@@ -11,7 +11,6 @@ from sqlalchemy import (
     Boolean, Column, DateTime, String, Text, Integer, 
     ForeignKey, Index, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -23,7 +22,7 @@ class Dashboard(Base):
     
     __tablename__ = "dashboards"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Basic Information
     name = Column(String(200), nullable=False, index=True)
@@ -31,7 +30,7 @@ class Dashboard(Base):
     slug = Column(String(100), nullable=True, index=True)  # URL-friendly identifier
     
     # Ownership and Access
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    owner_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     is_public = Column(Boolean, default=False, nullable=False)
     is_template = Column(Boolean, default=False, nullable=False)
     
@@ -52,8 +51,8 @@ class Dashboard(Base):
     enable_export = Column(Boolean, default=True, nullable=False)
     
     # Metadata
-    tags = Column(JSONB, nullable=True)  # Dashboard tags for categorization
-    settings = Column(JSONB, nullable=True)  # Additional dashboard settings
+    tags = Column(JSON, nullable=True)  # Dashboard tags for categorization
+    settings = Column(JSON, nullable=True)  # Additional dashboard settings
     
     # Statistics
     view_count = Column(Integer, default=0, nullable=False)
@@ -114,10 +113,10 @@ class DashboardWidget(Base):
     
     __tablename__ = "dashboard_widgets"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Dashboard Association
-    dashboard_id = Column(UUID(as_uuid=True), ForeignKey("dashboards.id"), nullable=False, index=True)
+    dashboard_id = Column(String(36), ForeignKey("dashboards.id"), nullable=False, index=True)
     
     # Widget Configuration
     widget_type = Column(String(50), nullable=False, index=True)  # chart, metric, table, text, etc.
@@ -125,13 +124,13 @@ class DashboardWidget(Base):
     subtitle = Column(String(300), nullable=True)
     
     # Data Configuration
-    metric_names = Column(JSONB, nullable=True)  # Metrics to display
+    metric_names = Column(JSON, nullable=True)  # Metrics to display
     data_source = Column(String(100), nullable=True, index=True)
-    query_config = Column(JSONB, nullable=True)  # Query parameters and filters
+    query_config = Column(JSON, nullable=True)  # Query parameters and filters
     
     # Chart Configuration
     chart_type = Column(String(50), nullable=True)  # line, bar, pie, area, gauge, etc.
-    chart_config = Column(JSONB, nullable=True)  # Chart.js configuration
+    chart_config = Column(JSON, nullable=True)  # Chart.js configuration
     
     # Layout and Position
     position_x = Column(Integer, default=0, nullable=False)
@@ -161,7 +160,7 @@ class DashboardWidget(Base):
     refresh_interval = Column(Integer, nullable=True)  # Override dashboard default
     
     # Data and Cache
-    cached_data = Column(JSONB, nullable=True)  # Cached widget data
+    cached_data = Column(JSON, nullable=True)  # Cached widget data
     last_data_update = Column(DateTime(timezone=True), nullable=True)
     
     # Sorting and Grouping
@@ -239,15 +238,15 @@ class DashboardAccess(Base):
     
     __tablename__ = "dashboard_access"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     
     # Access Configuration
-    dashboard_id = Column(UUID(as_uuid=True), ForeignKey("dashboards.id"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    dashboard_id = Column(String(36), ForeignKey("dashboards.id"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     
     # Access Control
     access_type = Column(String(20), default="view", nullable=False)  # view, edit, admin
-    shared_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    shared_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     
     # Public Sharing
     is_public_link = Column(Boolean, default=False, nullable=False)
